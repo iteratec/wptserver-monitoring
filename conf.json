@@ -1,0 +1,6 @@
+{
+  "servers": [],
+  "carbon_server": "url.to.carbon.component",
+  "carbon_port": 2003,
+  "path_prefix": "example.prefix."
+}

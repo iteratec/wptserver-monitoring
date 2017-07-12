@@ -84,7 +84,7 @@ class AgentMonitor:
         sock = socket.create_connection((carbon_server, carbon_port))
         for location in wptAgentData["locations"]:
             url = path_prefix+wptAgentData["url"]+'.'+location["id"]
-            message=(url+'.'+"status" + ' '+ "1" if (location["status"] == "OK") else "0") + ' %d\n' % int(time.time())
+            message=url+'.'+"status" + ' '+ ("1" if (location["status"] == "OK") else "0") + ' %d\n' % int(time.time())
             sock.send(message.encode())
             for tester in location["testers"]:
                 if( tester["pc"] is not None):

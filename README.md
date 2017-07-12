@@ -6,11 +6,11 @@ Script to monitor WPT servers and post metrics to a graphite server.
 Monitors the following wpt server metrics returned by `/getTesters.php`
 
 * status
-* freedisk
-* last
-* elapsed
-* cpu
-* errors
+* Last Check
+* Last Work
+* Free Disk
+* Error Rate
+* CPU Utilization
 
 ## Usage
 

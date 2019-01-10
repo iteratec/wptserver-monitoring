@@ -35,11 +35,19 @@ The necessary parameters are
   Prefix of the graphite path metrics resulting metrics are sent for. Must end with a dot.
   The complete metric path consists of the wpt server url prefixed by this prefix.
 
+* locations
+
+  Locations that will be fetched for the given server. If the server is not listed,
+  all available locations will be retrieved.
+
 An example json file might look like this:
 
     {
       "servers": ["example1.wpt.server.com", "example2.wpt.server.com"],
       "carbon_server": "url.to.carbon.component",
       "carbon_port": 2003,
-      "path_prefix": "example.prefix."
+      "path_prefix": "example.prefix.",
+      "locations": {
+        "example1.wpt.server.com": ["examplecity", "exampleplace"]
+      }
     }

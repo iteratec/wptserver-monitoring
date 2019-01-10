@@ -80,9 +80,9 @@ class AgentMonitor:
             resultDict["errors"]="-1"
         return resultDict
 
-    def reportToGraphite(self,wptAgentData,path_prefix,carbon_server,carbon_port):
+    def reportToGraphite(self,wptAgentData,path_prefix,carbon_server,carbon_port,locations):
         sock = socket.create_connection((carbon_server, carbon_port))
-        for location in wptAgentData["locations"]:
+        for location in filter(lambda loc: (loc["id"] in locations) if locations else True, wptAgentData["locations"]):
             url = path_prefix+wptAgentData["url"]+'.'+location["id"]
             message=url+'.'+"status" + ' '+ ("1" if (location["status"] == "OK") else "0") + ' %d\n' % int(time.time())
             sock.send(message.encode())
@@ -113,11 +113,12 @@ try:
         carbon_server = params["carbon_server"]
         carbon_port = params["carbon_port"]
         path_prefix = params["path_prefix"]
+        locations = params["locations"]
 
     for server in servers:
         try:
             wptAgentData = agentMonitor.parseWptServer(server)
-            agentMonitor.reportToGraphite(wptAgentData,path_prefix,carbon_server,carbon_port)
+            agentMonitor.reportToGraphite(wptAgentData,path_prefix,carbon_server,carbon_port,locations.get(server, None))
         except Exception as ex:
              print("error while processing server "+ server)
              print(ex)

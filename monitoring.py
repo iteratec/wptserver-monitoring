@@ -1,96 +1,98 @@
 import urllib.request
 import urllib.parse
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as element_tree
 import socket
 import time
 import json
 
+
 class AgentMonitor:
 
-    def printAllChildren(self, url):
-        xmlTree =self.getXMLTree(url)
-        root=xmlTree.getroot()
-        self.recursivePrint(root)
+    def print_all_children(self, url):
+        xml_tree = self.get_xml_tree(url)
+        root = xml_tree.getroot()
+        self.recursive_print(root)
 
-    def recursivePrint(self,xmlElement):
-        print(xmlElement.tag, xmlElement.text)
-        for child in xmlElement:
-            self.recursivePrint(child)
+    def recursive_print(self, xml_element):
+        print(xml_element.tag, xml_element.text)
+        for child in xml_element:
+            self.recursive_print(child)
 
-    def parseWptServer(self,url):
-        xmlTree =self.getXMLTree(url)
-        root=xmlTree.getroot()
-        resultDict = {"url":url}
-        resultDict["locations"] = []
+    def parse_wpt_server(self, url):
+        xml_tree = self.get_xml_tree(url)
+        root = xml_tree.getroot()
+        result_dict = {"url": url}
+        result_dict["locations"] = []
         for location in root.iter("location"):
-             resultDict["locations"].append(self.parseLocation(location))
-        return resultDict
+            result_dict["locations"].append(self.parse_location(location))
+        return result_dict
 
-    def getXMLTree(self,url):
-        urllib.request.urlretrieve('http://'+url+'/getTesters.php','testers.xml')
-        tree=ET.parse('testers.xml')
+    def get_xml_tree(self, url):
+        urllib.request.urlretrieve('http://' + url + '/getTesters.php', 'testers.xml')
+        tree = element_tree.parse('testers.xml')
         return tree
 
-    def parseLocation(self,xmlElement):
-        resultDict = {}
-        id = xmlElement.find("id")
-        resultDict["id"]=id.text
-        status = xmlElement.find("status")
-        if (status is not None):
-            resultDict["status"]=status.text
+    def parse_location(self, xml_element):
+        result_dict = {}
+        id = xml_element.find("id")
+        result_dict["id"] = id.text
+        status = xml_element.find("status")
+        if status is not None:
+            result_dict["status"] = status.text
         else:
-            resultDict["status"]="-1"
+            result_dict["status"] = "-1"
 
-        resultDict["testers"]=[]
-        for  tester in xmlElement.iter("tester"):
-            resultDict["testers"].append(self.parseTesters(tester))
-        return  resultDict
+        result_dict["testers"] = []
+        for tester in xml_element.iter("tester"):
+            result_dict["testers"].append(self.parse_testers(tester))
+        return result_dict
 
-    def parseTesters(self,xmlElement):
-        resultDict = {}
-        freedisk = xmlElement.find("freedisk")
-        if (freedisk is not None and freedisk.text is not None):
-            resultDict["freeDisk"] = freedisk.text
+    def parse_testers(self, xml_element):
+        result_dict = {}
+        freedisk = xml_element.find("freedisk")
+        if freedisk is not None and freedisk.text is not None:
+            result_dict["freeDisk"] = freedisk.text
         else:
-            resultDict["freeDisk"] = "-1"
-        pc = xmlElement.find("pc")
-        if (pc is not None and pc.text is not None):
-            resultDict["pc"]=pc.text
+            result_dict["freeDisk"] = "-1"
+        pc = xml_element.find("pc")
+        if pc is not None and pc.text is not None:
+            result_dict["pc"] = pc.text
         else:
-            resultDict["pc"]="-1"
-        lastWork = xmlElement.find("last")
-        if(lastWork is not None and lastWork.text is not None):
-            resultDict["lastWork"]=lastWork.text
+            result_dict["pc"] = "-1"
+        last_work = xml_element.find("last")
+        if last_work is not None and last_work.text is not None:
+            result_dict["lastWork"] = last_work.text
         else:
-            resultDict["lastWork"]="-1"
-        lastCheck = xmlElement.find("elapsed")
-        if (lastCheck is not None and lastCheck.text is not None):
-            resultDict["lastCheck"]=lastCheck.text
+            result_dict["lastWork"] = "-1"
+        last_check = xml_element.find("elapsed")
+        if last_check is not None and last_check.text is not None:
+            result_dict["lastCheck"] = last_check.text
         else:
-            resultDict["lastCheck"]="-1"
-        cpu = xmlElement.find("cpu")
-        if(cpu is not None and cpu.text is not None):
-            resultDict["cpu"]=cpu.text
+            result_dict["lastCheck"] = "-1"
+        cpu = xml_element.find("cpu")
+        if cpu is not None and cpu.text is not None:
+            result_dict["cpu"] = cpu.text
         else:
-            resultDict["cpu"]="-1"
-        errors = xmlElement.find("errors")
-        if(errors is not None and errors.text is not None):
-            resultDict["errors"]=errors.text
+            result_dict["cpu"] = "-1"
+        errors = xml_element.find("errors")
+        if errors is not None and errors.text is not None:
+            result_dict["errors"] = errors.text
         else:
-            resultDict["errors"]="-1"
-        return resultDict
+            result_dict["errors"] = "-1"
+        return result_dict
 
-    def reportToGraphite(self,wptAgentData,path_prefix,carbon_server,carbon_port,locations):
+    def report_to_graphite(self, wpt_agent_data, path_prefix, carbon_server, carbon_port, locations):
         sock = socket.create_connection((carbon_server, carbon_port))
-        for location in filter(lambda loc: (loc["id"] in locations) if locations else True, wptAgentData["locations"]):
-            url = path_prefix+wptAgentData["url"]+'.'+location["id"]
-            message=url+'.'+"status" + ' '+ ("1" if (location["status"] == "OK") else "0") + ' %d\n' % int(time.time())
+        for location in filter(lambda loc: (loc["id"] in locations) if locations else True, wpt_agent_data["locations"]):
+            url = path_prefix + wpt_agent_data["url"] + '.' + location["id"]
+            message = url + '.' + "status" + ' ' + ("1" if (location["status"] == "OK") else "0") + ' %d\n' % int(
+                time.time())
             sock.send(message.encode())
             for tester in location["testers"]:
-                if( tester["pc"] is not None):
+                if tester["pc"] is not None:
                     for key, value in tester.items():
                         if key is not "pc":
-                            message=(url+'.'+tester["pc"]+'.'+key + ' '+ value+ ' %d\n' % int(time.time()))
+                            message = (url + '.' + tester["pc"] + '.' + key + ' ' + value + ' %d\n' % int(time.time()))
                             sock.send(message.encode())
         sock.close()
 
@@ -117,11 +119,12 @@ try:
 
     for server in servers:
         try:
-            wptAgentData = agentMonitor.parseWptServer(server)
-            agentMonitor.reportToGraphite(wptAgentData,path_prefix,carbon_server,carbon_port,locations.get(server, None))
+            wptAgentData = agentMonitor.parse_wpt_server(server)
+            agentMonitor.report_to_graphite(wptAgentData, path_prefix, carbon_server, carbon_port,
+                                            locations.get(server, None))
         except Exception as ex:
-             print("error while processing server "+ server)
-             print(ex)
+            print("error while processing server " + server)
+            print(ex)
 
 except IOError as err:
     print(errorOutput)

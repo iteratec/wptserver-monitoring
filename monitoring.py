@@ -97,35 +97,40 @@ class AgentMonitor:
         sock.close()
 
 
-agentMonitor = AgentMonitor()
+if __name__ == '__main__':
+    agentMonitor = AgentMonitor()
 
-errorOutput = 'There needs to be a json file "conf.json" in the '
-'directory /opt/wptserver-monitoring/conf/ that defines a list of strings named "servers", a string '
-'named "path_prefix", a string '
-'named "carbon_server" and a port number "carbon_port". The urls defined by '
-'servers are wpt instances that will be monitored. The results will be sent '
-'to the graphite application on carbon_server listening on port carbon_port. '
-'The result message contains the metric path consisting of path_prefix and '
-'the carbon servers. '
+    errorOutput = """
+    There needs to be a json file "conf.json" in the directory
+        /opt/wptserver-monitoring/conf/
+    that defines:
+      - a list of strings named "servers",
+      - a string named "path_prefix",
+      - a string named "carbon_server" and
+      - a port number "carbon_port".
+    The urls defined by servers are wpt instances that will be monitored.
+    The results will be sent to the graphite application on carbon_server listening on port carbon_port.
+    The result message contains the metric path consisting of path_prefix and the carbon servers.
+    """
 
-try:
-    with open("/opt/wptserver-monitoring/conf/conf.json") as json_params:
-        params = json.load(json_params)
-        servers = params["servers"]
-        carbon_server = params["carbon_server"]
-        carbon_port = params["carbon_port"]
-        path_prefix = params["path_prefix"]
-        locations = params["locations"]
+    try:
+        with open("/opt/wptserver-monitoring/conf/conf.json") as json_params:
+            params = json.load(json_params)
+            servers = params["servers"]
+            carbon_server = params["carbon_server"]
+            carbon_port = params["carbon_port"]
+            path_prefix = params["path_prefix"]
+            locations = params["locations"]
 
-    for server in servers:
-        try:
-            wptAgentData = agentMonitor.parse_wpt_server(server)
-            agentMonitor.report_to_graphite(wptAgentData, path_prefix, carbon_server, carbon_port,
-                                            locations.get(server, None))
-        except Exception as ex:
-            print("error while processing server " + server)
-            print(ex)
+        for server in servers:
+            try:
+                wptAgentData = agentMonitor.parse_wpt_server(server)
+                agentMonitor.report_to_graphite(wptAgentData, path_prefix, carbon_server, carbon_port,
+                                                locations.get(server, None))
+            except Exception as ex:
+                print("error while processing server " + server)
+                print(ex)
 
-except IOError as err:
-    print(errorOutput)
-    print(err)
+    except IOError as err:
+        print(errorOutput)
+        print(err)

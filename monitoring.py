@@ -28,7 +28,7 @@ class AgentMonitor:
         return result_dict
 
     def get_xml_tree(self, url):
-        urllib.request.urlretrieve('http://' + url + '/getTesters.php', 'testers.xml')
+        urllib.request.urlretrieve('https://' + url + '/getTesters.php', 'testers.xml')
         tree = element_tree.parse('testers.xml')
         return tree
 
